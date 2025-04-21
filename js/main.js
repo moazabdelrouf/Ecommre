@@ -24,9 +24,9 @@ fetch("products.json")
   addToCartButtons.forEach((button) => {
    button.addEventListener("click", (event) => {
     const productId = event.target.getAttribute("data-id");
-    const selcetedProduct = data.find((product) => product.id == productId);
+    const selectedProduct = data.find((product) => product.id == productId);
 
-    addToCart(selcetedProduct);
+    addToCart(selectedProduct);
 
     const allMatchingButtons = document.querySelectorAll(
      `.btn_add_cart[data-id="${productId}"]`
@@ -34,7 +34,7 @@ fetch("products.json")
 
     allMatchingButtons.forEach((btn) => {
      btn.classList.add("active");
-     btn.innerHTML = `      <i class="fa-solid fa-cart-shopping"></i> Item in cart`;
+     btn.innerHTML = `<i class="fa-solid fa-cart-shopping"></i> Item in cart`;
     });
    });
   });
@@ -43,127 +43,95 @@ fetch("products.json")
 function addToCart(product) {
  let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
- cart.push({ ...product, quantity: 1 });
- localStorage.setItem("cart", JSON.stringify(cart));
+ // Check if the product already exists in the cart
+ const existingProduct = cart.find((item) => item.id === product.id);
+ if (existingProduct) {
+  existingProduct.quantity += 1; // Increment quantity if it exists
+ } else {
+  cart.push({ ...product, quantity: 1 }); // Add new product
+ }
 
+ localStorage.setItem("cart", JSON.stringify(cart));
  updateCart();
 }
 
 function updateCart() {
  const cartItemsContainer = document.getElementById("cart_items");
+ const checkout_items = document.getElementById("checkout_items");
+ const subtotal_checkout = document.querySelector(".subtotal_checkout");
+ const total_checkout = document.querySelector(".total_checkout");
 
  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+ let total_Price = 0;
+ let total_count = 0;
 
- const checkout_items = document.getElementById("checkout_items");
-
- let items_input = document.getElementById("items");
- let total_Price_input = document.getElementById("total_Price");
- let count_Items_input = document.getElementById("count_Items");
-
- if (checkout_items) {
-  checkout_items.innerHTML = "";
-
-  items_input.value = "";
-  total_Price_input.value = "";
-  count_Items_input.value = "";
- }
-
- var total_Price = 0;
- var total_count = 0;
-
+ // تحديث العناصر في السلة الجانبية
  cartItemsContainer.innerHTML = "";
  cart.forEach((item, index) => {
-  let total_Price_item = item.price * item.quantity;
-
+  const total_Price_item = item.price * item.quantity;
   total_Price += total_Price_item;
   total_count += item.quantity;
 
-  // check out inputs
-
-  items_input.value +=
-   item.name +
-   "   ---    " +
-   "price : " +
-   total_Price_item +
-   "   ---   " +
-   "count : " +
-   item.quantity +
-   "\n";
-
-  total_Price_input.value = total_Price + 20;
-  count_Items_input.value = total_count;
-
   cartItemsContainer.innerHTML += `
-        
-            <div class="item_cart">
-                <img src="${item.img}" alt="">
-                <div class="content">
-                    <h4>${item.name}</h4>
-                    <p class="price_cart">$${total_Price_item}</p>
-                    <div class="quantity_control">
-                        <button class="decrease_quantity" data-index=${index}>-</button>
-                        <span class="quantity">${item.quantity}</span>
-                        <button class="Increase_quantity" data-index=${index}>+</button>
-                    </div>
-                </div>
-
-                <button class="delete_item" data-inex="${index}" ><i class="fa-solid fa-trash-can"></i></button>
-            </div>
-
-
-        `;
-
-  if (checkout_items) {
-   checkout_items.innerHTML += `
-            <div class="item_cart">
-
-                            <div class="image_name">
-                                <img src="${item.img}" alt="">
-
-                                <div class="content">
-                                    <h4>${item.name}</h4>
-                                    <p class="price_cart">$${total_Price_item}</p>
-                                    <div class="quantity_control">
-                                        <button class="decrease_quantity"  data-index=${index}>-</button>
-                                        <span class="quantity">${item.quantity}</span>
-                                        <button class="Increase_quantity"  data-index=${index}>+</button>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            <button class="delete_item" data-inex="${index}"><i class="fa-solid fa-trash-can"></i></button>
-
-
-
-                        </div>
-            
-            `;
-  }
+      <div class="item_cart">
+        <img src="${item.img}" alt="">
+        <div class="content">
+          <h4>${item.name}</h4>
+          <p class="price_cart">$${total_Price_item}</p>
+          <div class="quantity_control">
+            <button class="decrease_quantity" data-index=${index}>-</button>
+            <span class="quantity">${item.quantity}</span>
+            <button class="Increase_quantity" data-index=${index}>+</button>
+          </div>
+        </div>
+        <button class="delete_item" data-index="${index}"><i class="fa-solid fa-trash-can"></i></button>
+      </div>
+    `;
  });
 
- const price_cart_total = document.querySelector(".price_cart_toral");
-
- const count_item_cart = document.querySelector(".Count_item_cart");
-
- const count_item_header = document.querySelector(".count_item_header");
-
- price_cart_total.innerHTML = `$ ${total_Price}`;
-
- count_item_cart.innerHTML = total_count;
-
- count_item_header.innerHTML = total_count;
-
+ // تحديث العناصر في صفحة checkout
  if (checkout_items) {
-  const subtotal_checkout = document.querySelector(".subtotal_checkout");
-  const total_checkout = document.querySelector(".total_checkout");
+  checkout_items.innerHTML = "";
+  cart.forEach((item, index) => {
+   const total_Price_item = item.price * item.quantity;
 
-  subtotal_checkout.innerHTML = `$ ${total_Price}`;
-  total_checkout.innerHTML = `$ ${total_Price + 20}`;
+   checkout_items.innerHTML += `
+        <div class="item_cart">
+          <div class="image_name">
+            <img src="${item.img}" alt="">
+            <div class="content">
+              <h4>${item.name}</h4>
+              <p class="price_cart">$${total_Price_item}</p>
+              <div class="quantity_control">
+                <button class="decrease_quantity" data-index=${index}>-</button>
+                <span class="quantity">${item.quantity}</span>
+                <button class="Increase_quantity" data-index=${index}>+</button>
+              </div>
+            </div>
+          </div>
+          <button class="delete_item" data-index="${index}"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+      `;
+  });
+
+  // تحديث الإجماليات في صفحة checkout
+  if (subtotal_checkout) subtotal_checkout.innerHTML = `$${total_Price}`;
+  if (total_checkout) total_checkout.innerHTML = `$${total_Price + 20}`;
  }
 
+ // تحديث الإجماليات في السلة الجانبية
+ const price_cart_total = document.querySelector(".price_cart_toral");
+ const count_item_cart = document.querySelector(".Count_item_cart");
+ const count_item_header = document.querySelector(".count_item_header");
+
+ if (price_cart_total) price_cart_total.innerHTML = `$${total_Price}`;
+ if (count_item_cart) count_item_cart.innerHTML = total_count;
+ if (count_item_header) count_item_header.innerHTML = total_count;
+
+ // إضافة الأحداث لأزرار التحكم في الكمية
  const increaseButtons = document.querySelectorAll(".Increase_quantity");
  const decreaseButtons = document.querySelectorAll(".decrease_quantity");
+ const deleteButtons = document.querySelectorAll(".delete_item");
 
  increaseButtons.forEach((button) => {
   button.addEventListener("click", (event) => {
@@ -179,14 +147,14 @@ function updateCart() {
   });
  });
 
- const delteButtons = document.querySelectorAll(".delete_item");
-
- delteButtons.forEach((button) => {
+ deleteButtons.forEach((button) => {
   button.addEventListener("click", (event) => {
-   const itemIndex = event.target.closest("button").getAttribute("data-inex");
+   const itemIndex = event.target.getAttribute("data-index");
    removeFromCart(itemIndex);
   });
  });
+
+ console.log("Cart updated:", cart);
 }
 
 function increaseQuantity(index) {
@@ -213,17 +181,19 @@ function removeFromCart(index) {
  const removeProduct = cart.splice(index, 1)[0];
  localStorage.setItem("cart", JSON.stringify(cart));
  updateCart();
- updateButoonsState(removeProduct.id);
+ updateButtonsState(removeProduct.id);
 }
 
-function updateButoonsState(productId) {
+function updateButtonsState(productId) {
  const allMatchingButtons = document.querySelectorAll(
   `.btn_add_cart[data-id="${productId}"]`
  );
  allMatchingButtons.forEach((button) => {
   button.classList.remove("active");
-  button.innerHTML = `      <i class="fa-solid fa-cart-shopping"></i> add to cart`;
+  button.innerHTML = `<i class="fa-solid fa-cart-shopping"></i> add to cart`;
  });
 }
 
-updateCart();
+window.addEventListener("DOMContentLoaded", () => {
+ updateCart();
+});
